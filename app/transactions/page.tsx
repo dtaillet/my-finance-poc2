@@ -1,4 +1,6 @@
 import AccountSelect from "@/lib/ui/account-select";
+import ClearFilters from "@/lib/ui/clear-filters";
+import FilterChips from "@/lib/ui/filter-chips";
 import Pagination from "@/lib/ui/pagination";
 import TagFilter from "@/lib/ui/tag-filter";
 import TransactionsTable from "@/lib/ui/transactions-table";
@@ -39,10 +41,14 @@ export default async function TransactionsPage(props: {
         <h1 className="text-2xl font-semibold tracking-tight text-foreground">
           Transactions
         </h1>
-        <AccountSelect accountIds={accountIds} selected={selectedAccountIds} />
       </div>
 
-      <TagFilter allTags={allTags} selected={tags} />
+      <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
+        <AccountSelect accountIds={accountIds} selected={selectedAccountIds} />
+        <TagFilter allTags={allTags} selected={tags} />
+        <FilterChips accounts={selectedAccountIds} tags={tags} />
+        <ClearFilters hasFilters={selectedAccountIds.length > 0 || tags.length > 0} />
+      </div>
 
       <div className="rounded-xl border border-line-2 bg-card overflow-hidden">
         <Suspense fallback={<p className="p-6 text-sm text-muted-foreground-1">Fetching transactions...</p>}>
