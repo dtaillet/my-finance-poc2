@@ -37,6 +37,12 @@ export default function TopMenu() {
         >
           Imports
         </Link>
+        <Link
+          href="/filters"
+          className="text-sm font-medium text-muted-foreground-1 transition-colors hover:text-foreground"
+        >
+          Filters
+        </Link>
       </nav>
     </header>
   );
