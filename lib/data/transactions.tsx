@@ -1,7 +1,28 @@
 import sql from 'better-sqlite3';
+import type { OfxTransaction } from '@/lib/data/ofx';
 
 const db = sql('database/transactions.db');
 const pageSize = 10;
+
+// Inserts transactions, ignoring any whose fitid already exists.
+// Returns how many were imported and how many were ignored.
+export function importTransactions(transactions: OfxTransaction[]) {
+  const insert = db.prepare(
+    'INSERT OR IGNORE INTO transactions (fitid, account_id, account_type, dtposted, trnamt, name, memo, currency) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
+  );
+
+  const run = db.transaction((rows: OfxTransaction[]) => {
+    let imported = 0;
+    for (const t of rows) {
+      const result = insert.run(t.fitid, t.accountId, t.accountType, t.dtposted, t.trnamt, t.name, t.memo, t.currency);
+      if (result.changes > 0) imported += 1;
+    }
+    return imported;
+  });
+
+  const imported = run(transactions);
+  return { imported, ignored: transactions.length - imported };
+}
 
 export async function getTransactions({ currentPage, accountId }: { currentPage: number; accountId?: string }) {
   await new Promise((resolve) => setTimeout(resolve, 20));
