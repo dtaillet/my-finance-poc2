@@ -22,3 +22,10 @@ CREATE TABLE IF NOT EXISTS imports (
     comment         TEXT                -- free-text comment
 );
 
+CREATE TABLE IF NOT EXISTS transaction_tags (
+    fitid           TEXT NOT NULL,      -- transactions.fitid
+    tag             TEXT NOT NULL,      -- normalized tag (trimmed, lowercase, <=30 chars)
+    PRIMARY KEY (fitid, tag),
+    FOREIGN KEY (fitid) REFERENCES transactions(fitid) ON DELETE CASCADE
+);
+
