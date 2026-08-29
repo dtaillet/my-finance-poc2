@@ -18,3 +18,10 @@ export function insertImport({ importId, fileName, comment }: { importId: string
   const importDate = new Date().toISOString().slice(0, 10);
   db.prepare('INSERT INTO imports (import_id, file_name, import_date, comment) VALUES (?, ?, ?, ?)').run(importId, fileName, importDate, comment);
 }
+
+export function deleteImportsByIds(ids: string[]) {
+  if (ids.length === 0) return 0;
+  const placeholders = ids.map(() => '?').join(', ');
+  const result = db.prepare(`DELETE FROM imports WHERE import_id IN (${placeholders})`).run(...ids);
+  return result.changes;
+}
