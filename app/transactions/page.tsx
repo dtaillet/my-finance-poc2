@@ -16,17 +16,18 @@ export default async function TransactionsPage(props: {
   }>;
 }) {
   const searchParams = await props.searchParams;
-  const accountId = searchParams?.account_id || undefined;
   const accountIds = await getAccountIds();
+  const selectedAccountIds = (searchParams?.account_id?.split(',').map((id) => id.trim()).filter(Boolean) ?? [])
+    .filter((id) => accountIds.includes(id));
   const allTags = getAllTags();
   const tags = (searchParams?.tags?.split(',').map((tag) => tag.trim()).filter(Boolean) ?? [])
     .filter((tag) => allTags.includes(tag));
-  const totalPages = await getTotalTransactionsPages({ accountId, tags });
+  const totalPages = await getTotalTransactionsPages({ accountIds: selectedAccountIds, tags });
   let currentPage = Number(searchParams?.page) || 1;
   if (totalPages > 0 && currentPage > totalPages) {
     currentPage = totalPages;
     const params = new URLSearchParams();
-    if (accountId) params.set('account_id', accountId);
+    if (selectedAccountIds.length > 0) params.set('account_id', selectedAccountIds.join(','));
     if (tags.length > 0) params.set('tags', tags.join(','));
     params.set('page', currentPage.toString());
     redirect(`/transactions?${params.toString()}`);
@@ -38,14 +39,14 @@ export default async function TransactionsPage(props: {
         <h1 className="text-2xl font-semibold tracking-tight text-foreground">
           Transactions
         </h1>
-        <AccountSelect accountIds={accountIds} selected={accountId} />
+        <AccountSelect accountIds={accountIds} selected={selectedAccountIds} />
       </div>
 
       <TagFilter allTags={allTags} selected={tags} />
 
       <div className="rounded-xl border border-line-2 bg-card overflow-hidden">
         <Suspense fallback={<p className="p-6 text-sm text-muted-foreground-1">Fetching transactions...</p>}>
-          <TransactionsTable currentPage={currentPage} accountId={accountId} tags={tags} />
+          <TransactionsTable currentPage={currentPage} accountIds={selectedAccountIds} tags={tags} />
         </Suspense>
       </div>
 

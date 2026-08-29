@@ -1,8 +1,8 @@
 import { getAllTags, getTransactions } from "@/lib/data/transactions";
 import TransactionTags from "@/lib/ui/transaction-tags";
 
-export default async function TransactionsTable({ currentPage, accountId, tags }: { currentPage: number; accountId?: string; tags?: string[] }) {
-  const transactions = await getTransactions({ currentPage, accountId, tags });
+export default async function TransactionsTable({ currentPage, accountIds, tags }: { currentPage: number; accountIds?: string[]; tags?: string[] }) {
+  const transactions = await getTransactions({ currentPage, accountIds, tags });
   const allTags = getAllTags();
   const eurFormatter = new Intl.NumberFormat("fr-FR", {
     style: "currency",
