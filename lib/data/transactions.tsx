@@ -1,5 +1,6 @@
 import sql from 'better-sqlite3';
 import type { OfxTransaction } from '@/lib/data/ofx';
+import { UNTAGGED_FILTER } from '@/lib/tags';
 
 const db = sql('database/transactions.db');
 const pageSize = 10;
@@ -44,11 +45,19 @@ function buildTransactionFilter({ accountIds, tags }: { accountIds?: string[]; t
     params.push(...accountIds);
   }
   if (tags && tags.length > 0) {
-    const placeholders = tags.map(() => '?').join(', ');
-    conditions.push(
-      `(SELECT COUNT(DISTINCT tag) FROM transaction_tags WHERE fitid = transactions.fitid AND tag IN (${placeholders})) = ?`,
-    );
-    params.push(...tags, tags.length);
+    if (tags.includes(UNTAGGED_FILTER)) {
+      conditions.push(
+        `NOT EXISTS (SELECT 1 FROM transaction_tags WHERE fitid = transactions.fitid)`,
+      );
+    }
+    const namedTags = tags.filter((tag) => tag !== UNTAGGED_FILTER);
+    if (namedTags.length > 0) {
+      const placeholders = namedTags.map(() => '?').join(', ');
+      conditions.push(
+        `(SELECT COUNT(DISTINCT tag) FROM transaction_tags WHERE fitid = transactions.fitid AND tag IN (${placeholders})) = ?`,
+      );
+      params.push(...namedTags, namedTags.length);
+    }
   }
   const where = conditions.length > 0 ? `WHERE ${conditions.join(' AND ')}` : '';
   return { where, params };

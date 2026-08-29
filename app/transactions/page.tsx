@@ -5,6 +5,7 @@ import Pagination from "@/lib/ui/pagination";
 import TagFilter from "@/lib/ui/tag-filter";
 import TransactionsTable from "@/lib/ui/transactions-table";
 import { getAccountIds, getAllTags, getTotalTransactionsPages } from "@/lib/data/transactions";
+import { UNTAGGED_FILTER } from "@/lib/tags";
 import { redirect } from "next/navigation";
 import { Suspense } from "react";
 
@@ -23,7 +24,7 @@ export default async function TransactionsPage(props: {
     .filter((id) => accountIds.includes(id));
   const allTags = getAllTags();
   const tags = (searchParams?.tags?.split(',').map((tag) => tag.trim()).filter(Boolean) ?? [])
-    .filter((tag) => allTags.includes(tag));
+    .filter((tag) => tag === UNTAGGED_FILTER || allTags.includes(tag));
   const totalPages = await getTotalTransactionsPages({ accountIds: selectedAccountIds, tags });
   let currentPage = Number(searchParams?.page) || 1;
   if (totalPages > 0 && currentPage > totalPages) {

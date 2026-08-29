@@ -2,6 +2,7 @@
 
 import { useMemo, useRef, useState } from 'react';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
+import { UNTAGGED_FILTER, UNTAGGED_LABEL } from '@/lib/tags';
 
 export default function TagFilter({ allTags, selected }: { allTags: string[]; selected: string[] }) {
   const pathname = usePathname();
@@ -11,7 +12,7 @@ export default function TagFilter({ allTags, selected }: { allTags: string[]; se
   const inputRef = useRef<HTMLInputElement>(null);
 
   const availableTags = useMemo(
-    () => allTags.filter((tag) => !selected.includes(tag)),
+    () => [UNTAGGED_FILTER, ...allTags].filter((tag) => !selected.includes(tag)),
     [allTags, selected],
   );
 
@@ -28,8 +29,8 @@ export default function TagFilter({ allTags, selected }: { allTags: string[]; se
 
   function addTag(raw: string) {
     const tag = raw.trim().toLowerCase();
-    // Only existing tags are allowed.
-    if (!allTags.includes(tag) || selected.includes(tag)) {
+    // Only existing tags (or the untagged sentinel) are allowed.
+    if ((tag !== UNTAGGED_FILTER && !allTags.includes(tag)) || selected.includes(tag)) {
       setValue('');
       return;
     }
@@ -53,7 +54,8 @@ export default function TagFilter({ allTags, selected }: { allTags: string[]; se
           const next = event.target.value;
           setValue(next);
           // Selecting a datalist option fires change with the full value.
-          if (allTags.includes(next.trim().toLowerCase())) {
+          const normalized = next.trim().toLowerCase();
+          if (normalized === UNTAGGED_FILTER || allTags.includes(normalized)) {
             addTag(next);
           }
         }}
@@ -67,7 +69,9 @@ export default function TagFilter({ allTags, selected }: { allTags: string[]; se
       />
       <datalist id="tag-filter-options">
         {availableTags.map((tag) => (
-          <option key={tag} value={tag} />
+          <option key={tag} value={tag}>
+            {tag === UNTAGGED_FILTER ? UNTAGGED_LABEL : tag}
+          </option>
         ))}
       </datalist>
     </div>
