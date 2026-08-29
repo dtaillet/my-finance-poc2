@@ -8,10 +8,11 @@ import {
   deleteFiltersByIds,
   getMatchingTransactions,
   applyTagToTransactions,
-  getFilterOptions,
+  getFilterOptionsForValue,
   addValueToFilter,
+  removeValueFromFilter,
   type MatchingTransaction,
-  type FilterOption,
+  type FilterOptionWithMembership,
 } from '@/lib/data/filters';
 
 export type FilterFormState = {
@@ -92,8 +93,8 @@ export async function applyFilterTag(filterId: string): Promise<{ error?: string
   return { added };
 }
 
-export async function listFilterOptions(): Promise<FilterOption[]> {
-  return getFilterOptions();
+export async function listFilterOptions(name: string): Promise<FilterOptionWithMembership[]> {
+  return getFilterOptionsForValue(name.trim());
 }
 
 export async function addTransactionToFilter(filterId: string, name: string): Promise<{ error?: string; success?: boolean }> {
@@ -102,6 +103,19 @@ export async function addTransactionToFilter(filterId: string, name: string): Pr
   if (value.length === 0) return { error: 'Transaction name is empty.' };
 
   const ok = addValueToFilter(filterId, value);
+  if (!ok) return { error: 'Filter not found.' };
+
+  revalidatePath('/filters');
+  revalidatePath('/transactions');
+  return { success: true };
+}
+
+export async function removeTransactionFromFilter(filterId: string, name: string): Promise<{ error?: string; success?: boolean }> {
+  const value = name.trim();
+  if (!filterId) return { error: 'Missing filter.' };
+  if (value.length === 0) return { error: 'Transaction name is empty.' };
+
+  const ok = removeValueFromFilter(filterId, value);
   if (!ok) return { error: 'Filter not found.' };
 
   revalidatePath('/filters');

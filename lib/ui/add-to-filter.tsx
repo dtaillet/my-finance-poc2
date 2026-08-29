@@ -2,8 +2,8 @@
 
 import { useEffect, useState, useTransition } from 'react';
 import { useRouter } from 'next/navigation';
-import { addTransactionToFilter, listFilterOptions } from '@/app/filters/actions';
-import type { FilterOption } from '@/lib/data/filters';
+import { addTransactionToFilter, listFilterOptions, removeTransactionFromFilter } from '@/app/filters/actions';
+import type { FilterOptionWithMembership } from '@/lib/data/filters';
 
 export default function AddToFilter({ name }: { name: string }) {
   const [open, setOpen] = useState(false);
@@ -27,31 +27,38 @@ export default function AddToFilter({ name }: { name: string }) {
 
 function AddToFilterDialog({ name, onClose }: { name: string; onClose: () => void }) {
   const router = useRouter();
-  const [options, setOptions] = useState<FilterOption[] | null>(null);
+  const [options, setOptions] = useState<FilterOptionWithMembership[] | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
 
   useEffect(() => {
     let active = true;
-    listFilterOptions().then((result) => {
+    listFilterOptions(name).then((result) => {
       if (active) setOptions(result);
     });
     return () => {
       active = false;
     };
-  }, []);
+  }, [name]);
 
-  function handleSelect(filter: FilterOption) {
+  function handleToggle(filter: FilterOptionWithMembership) {
     setError(null);
     setSuccess(null);
     startTransition(async () => {
-      const result = await addTransactionToFilter(filter.filter_id, name);
+      const result = filter.hasValue
+        ? await removeTransactionFromFilter(filter.filter_id, name)
+        : await addTransactionToFilter(filter.filter_id, name);
       if (result.error) {
         setError(result.error);
         return;
       }
-      setSuccess(`Added to "${filter.name}".`);
+      setOptions((current) =>
+        current?.map((option) =>
+          option.filter_id === filter.filter_id ? { ...option, hasValue: !filter.hasValue } : option,
+        ) ?? current,
+      );
+      setSuccess(filter.hasValue ? `Removed from "${filter.name}".` : `Added to "${filter.name}".`);
       router.refresh();
     });
   }
@@ -79,7 +86,7 @@ function AddToFilterDialog({ name, onClose }: { name: string; onClose: () => voi
         </div>
 
         <p className="mb-4 text-sm text-muted-foreground-1">
-          Add <span className="font-medium text-foreground">{name}</span> as a search value to an existing filter.
+          Add or remove <span className="font-medium text-foreground">{name}</span> as a search value on your filters.
         </p>
 
         {options === null ? (
@@ -89,18 +96,36 @@ function AddToFilterDialog({ name, onClose }: { name: string; onClose: () => voi
         ) : (
           <ul className="flex max-h-64 flex-col gap-1 overflow-y-auto">
             {options.map((filter) => (
-              <li key={filter.filter_id}>
-                <button
-                  type="button"
-                  onClick={() => handleSelect(filter)}
-                  disabled={pending}
-                  className="flex w-full items-center justify-between gap-2 rounded-lg border border-line-2 px-3 py-2 text-left text-sm text-foreground transition-colors hover:bg-muted-hover disabled:opacity-50"
-                >
-                  <span className="font-medium">{filter.name}</span>
-                  <span className="inline-flex items-center rounded-full border border-line-2 bg-muted-hover px-2 py-0.5 text-xs text-muted-foreground-1">
+              <li key={filter.filter_id} className="flex items-center justify-between gap-2 rounded-lg border border-line-2 px-3 py-2">
+                <span className="flex min-w-0 items-center gap-2">
+                  <span className="truncate text-sm font-medium text-foreground">{filter.name}</span>
+                  <span className="inline-flex shrink-0 items-center rounded-full border border-line-2 bg-muted-hover px-2 py-0.5 text-xs text-muted-foreground-1">
                     {filter.tag}
                   </span>
-                </button>
+                </span>
+                {filter.hasValue ? (
+                  <button
+                    type="button"
+                    onClick={() => handleToggle(filter)}
+                    disabled={pending}
+                    aria-label={`Remove "${name}" from ${filter.name}`}
+                    className="inline-flex shrink-0 items-center gap-1 rounded-lg border border-line-2 px-2.5 py-1 text-xs font-medium text-red-600 transition-colors hover:bg-muted-hover disabled:opacity-50 dark:text-red-500"
+                  >
+                    <svg className="size-3.5" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14" /></svg>
+                    Remove
+                  </button>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={() => handleToggle(filter)}
+                    disabled={pending}
+                    aria-label={`Add "${name}" to ${filter.name}`}
+                    className="inline-flex shrink-0 items-center gap-1 rounded-lg border border-line-2 px-2.5 py-1 text-xs font-medium text-foreground transition-colors hover:bg-muted-hover disabled:opacity-50"
+                  >
+                    <svg className="size-3.5" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14" /><path d="M12 5v14" /></svg>
+                    Add
+                  </button>
+                )}
               </li>
             ))}
           </ul>

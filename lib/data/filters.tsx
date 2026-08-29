@@ -107,11 +107,34 @@ export function getFilterOptions(): FilterOption[] {
   return db.prepare('SELECT filter_id, name, tag FROM filters ORDER BY name').all() as FilterOption[];
 }
 
+export type FilterOptionWithMembership = FilterOption & { hasValue: boolean };
+
+// Lists all filters, flagging those that already contain the given search value.
+export function getFilterOptionsForValue(value: string): FilterOptionWithMembership[] {
+  const rows = db
+    .prepare(
+      `SELECT f.filter_id, f.name, f.tag,
+         EXISTS(SELECT 1 FROM filter_values v WHERE v.filter_id = f.filter_id AND v.value = ?) AS has_value
+       FROM filters f
+       ORDER BY f.name`,
+    )
+    .all(value) as { filter_id: string; name: string; tag: string; has_value: number }[];
+  return rows.map((row) => ({ filter_id: row.filter_id, name: row.name, tag: row.tag, hasValue: row.has_value === 1 }));
+}
+
 // Adds a search value to an existing filter. Returns false if the filter is missing.
 export function addValueToFilter(filterId: string, value: string): boolean {
   const exists = db.prepare('SELECT 1 FROM filters WHERE filter_id = ?').get(filterId);
   if (!exists) return false;
   db.prepare('INSERT OR IGNORE INTO filter_values (filter_id, value) VALUES (?, ?)').run(filterId, value);
+  return true;
+}
+
+// Removes a search value from an existing filter. Returns false if the filter is missing.
+export function removeValueFromFilter(filterId: string, value: string): boolean {
+  const exists = db.prepare('SELECT 1 FROM filters WHERE filter_id = ?').get(filterId);
+  if (!exists) return false;
+  db.prepare('DELETE FROM filter_values WHERE filter_id = ? AND value = ?').run(filterId, value);
   return true;
 }
 
