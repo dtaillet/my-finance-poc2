@@ -1,0 +1,16 @@
+-- Transactions extracted from CA20250519_114826.ofx (OFX format)
+
+CREATE TABLE IF NOT EXISTS transactions (
+    fitid           TEXT PRIMARY KEY,   -- OFX FITID
+    account_id      TEXT NOT NULL,      -- OFX ACCTID
+    account_type    TEXT NOT NULL,      -- CHECKING / CREDITCARD
+    dtposted        DATE NOT NULL,      -- OFX DTPOSTED
+    trnamt          NUMERIC(12,2) NOT NULL, -- OFX TRNAMT
+    name            TEXT,               -- OFX NAME / payee
+    memo            TEXT,               -- OFX MEMO
+    currency        TEXT
+);
+
+INSERT INTO transactions (fitid, account_id, account_type, dtposted, trnamt, name, memo, currency) VALUES
+    ('123456789', '123456', 'CHECKING', '2025-05-17', -210.00, 'NOISY LE ROI 4       17/05 08H53', 'RETRAIT AU DISTRIBUTEUR NOISY LE ROI 4       17/05 08H53', 'EUR'),
+    ('987654321', '123 38XX XXXX 456', 'CREDITCARD', '2025-04-10', -98.83, 'UEP*SUPER U NOISY LE ROI', '.', 'EUR');

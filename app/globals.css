@@ -1,26 +1,50 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
+  --background: #f9fafb;
   --foreground: #171717;
-}
-
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --card: #ffffff;
+  --muted-foreground-1: #6b7280;
+  --line-2: #e5e7eb;
+  --table-line: #f0f1f3;
+  --muted-hover: #f3f4f6;
+  --muted-focus: #e5e7eb;
+  --scrollbar-track: #f3f4f6;
+  --scrollbar-thumb: #d1d5db;
 }
 
 @media (prefers-color-scheme: dark) {
   :root {
     --background: #0a0a0a;
     --foreground: #ededed;
+    --card: #111111;
+    --muted-foreground-1: #9ca3af;
+    --line-2: #262626;
+    --table-line: #1f1f1f;
+    --muted-hover: #1a1a1a;
+    --muted-focus: #262626;
+    --scrollbar-track: #171717;
+    --scrollbar-thumb: #333333;
   }
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-muted-foreground-1: var(--muted-foreground-1);
+  --color-line-2: var(--line-2);
+  --color-table-line: var(--table-line);
+  --color-muted-hover: var(--muted-hover);
+  --color-muted-focus: var(--muted-focus);
+  --color-scrollbar-track: var(--scrollbar-track);
+  --color-scrollbar-thumb: var(--scrollbar-thumb);
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
 }
 
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-geist-sans), Arial, Helvetica, sans-serif;
 }
