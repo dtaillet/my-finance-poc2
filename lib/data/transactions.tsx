@@ -35,7 +35,7 @@ export function importTransactions(transactions: OfxTransaction[]) {
 }
 
 // Builds a WHERE clause and bound params shared by list and count queries.
-// Tags use AND semantics: a transaction must carry every selected tag.
+// Tags use OR semantics: a transaction matches if it carries any selected tag.
 function buildTransactionFilter({ accountIds, tags }: { accountIds?: string[]; tags?: string[] }) {
   const conditions: string[] = [];
   const params: (string | number)[] = [];
@@ -45,18 +45,22 @@ function buildTransactionFilter({ accountIds, tags }: { accountIds?: string[]; t
     params.push(...accountIds);
   }
   if (tags && tags.length > 0) {
+    const tagConditions: string[] = [];
     if (tags.includes(UNTAGGED_FILTER)) {
-      conditions.push(
+      tagConditions.push(
         `NOT EXISTS (SELECT 1 FROM transaction_tags WHERE fitid = transactions.fitid)`,
       );
     }
     const namedTags = tags.filter((tag) => tag !== UNTAGGED_FILTER);
     if (namedTags.length > 0) {
       const placeholders = namedTags.map(() => '?').join(', ');
-      conditions.push(
-        `(SELECT COUNT(DISTINCT tag) FROM transaction_tags WHERE fitid = transactions.fitid AND tag IN (${placeholders})) = ?`,
+      tagConditions.push(
+        `EXISTS (SELECT 1 FROM transaction_tags WHERE fitid = transactions.fitid AND tag IN (${placeholders}))`,
       );
-      params.push(...namedTags, namedTags.length);
+      params.push(...namedTags);
+    }
+    if (tagConditions.length > 0) {
+      conditions.push(`(${tagConditions.join(' OR ')})`);
     }
   }
   const where = conditions.length > 0 ? `WHERE ${conditions.join(' AND ')}` : '';
