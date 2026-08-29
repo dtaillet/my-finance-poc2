@@ -18,7 +18,7 @@ INSERT INTO transactions (fitid, account_id, account_type, dtposted, trnamt, nam
 CREATE TABLE IF NOT EXISTS imports (
     import_id       TEXT PRIMARY KEY,   -- file identifier
     file_name       TEXT NOT NULL,      -- imported file name
-    import_date     DATE NOT NULL,      -- date of the import
+    import_date     DATETIME NOT NULL,  -- date and time of the import
     comment         TEXT                -- free-text comment
 );
 

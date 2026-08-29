@@ -13,7 +13,10 @@ export type ImportRecord = {
   comment: string;
 };
 
-const dateFormatter = new Intl.DateTimeFormat('fr-FR');
+const dateFormatter = new Intl.DateTimeFormat('fr-FR', {
+  dateStyle: 'short',
+  timeStyle: 'medium',
+});
 
 export default function ImportsManager({ imports }: { imports: ImportRecord[] }) {
   const router = useRouter();

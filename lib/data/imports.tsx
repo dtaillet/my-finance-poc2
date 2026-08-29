@@ -15,7 +15,7 @@ export async function getTotalImportsPages() {
 }
 
 export function insertImport({ importId, fileName, comment }: { importId: string; fileName: string; comment: string }) {
-  const importDate = new Date().toISOString().slice(0, 10);
+  const importDate = new Date().toISOString();
   db.prepare('INSERT INTO imports (import_id, file_name, import_date, comment) VALUES (?, ?, ?, ?)').run(importId, fileName, importDate, comment);
 }
 
