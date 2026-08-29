@@ -33,21 +33,41 @@ export function importTransactions(transactions: OfxTransaction[]) {
   return { imported, ignored: transactions.length - imported };
 }
 
-export async function getTransactions({ currentPage, accountId }: { currentPage: number; accountId?: string }) {
+// Builds a WHERE clause and bound params shared by list and count queries.
+// Tags use AND semantics: a transaction must carry every selected tag.
+function buildTransactionFilter({ accountId, tags }: { accountId?: string; tags?: string[] }) {
+  const conditions: string[] = [];
+  const params: (string | number)[] = [];
+  if (accountId) {
+    conditions.push('account_id = ?');
+    params.push(accountId);
+  }
+  if (tags && tags.length > 0) {
+    const placeholders = tags.map(() => '?').join(', ');
+    conditions.push(
+      `(SELECT COUNT(DISTINCT tag) FROM transaction_tags WHERE fitid = transactions.fitid AND tag IN (${placeholders})) = ?`,
+    );
+    params.push(...tags, tags.length);
+  }
+  const where = conditions.length > 0 ? `WHERE ${conditions.join(' AND ')}` : '';
+  return { where, params };
+}
+
+export async function getTransactions({ currentPage, accountId, tags }: { currentPage: number; accountId?: string; tags?: string[] }) {
   await new Promise((resolve) => setTimeout(resolve, 20));
   const offset = (currentPage - 1) * pageSize;
-  const rows = accountId
-    ? db.prepare('SELECT ROW_NUMBER() OVER (ORDER BY fitid) AS row_num, * FROM transactions WHERE account_id = ? LIMIT ? OFFSET ?').all(accountId, pageSize, offset)
-    : db.prepare('SELECT ROW_NUMBER() OVER (ORDER BY fitid) AS row_num, * FROM transactions LIMIT ? OFFSET ?').all(pageSize, offset);
+  const { where, params } = buildTransactionFilter({ accountId, tags });
+  const rows = db
+    .prepare(`SELECT ROW_NUMBER() OVER (ORDER BY fitid) AS row_num, * FROM transactions ${where} LIMIT ? OFFSET ?`)
+    .all(...params, pageSize, offset);
 
   const tagsByFitid = getTagsForTransactions(rows.map((row) => row.fitid));
   return rows.map((row) => ({ ...row, tags: tagsByFitid.get(row.fitid) ?? [] }));
 }
 
-export async function getTotalTransactionsPages({ accountId }: { accountId?: string } = {}) {
-  const totalTransactions = accountId
-    ? db.prepare('SELECT COUNT(*) AS count FROM transactions WHERE account_id = ?').get(accountId).count
-    : db.prepare('SELECT COUNT(*) AS count FROM transactions').get().count;
+export async function getTotalTransactionsPages({ accountId, tags }: { accountId?: string; tags?: string[] } = {}) {
+  const { where, params } = buildTransactionFilter({ accountId, tags });
+  const totalTransactions = db.prepare(`SELECT COUNT(*) AS count FROM transactions ${where}`).get(...params).count;
   return Math.ceil(totalTransactions / pageSize);
 }
 

@@ -1,7 +1,8 @@
 import AccountSelect from "@/lib/ui/account-select";
 import Pagination from "@/lib/ui/pagination";
+import TagFilter from "@/lib/ui/tag-filter";
 import TransactionsTable from "@/lib/ui/transactions-table";
-import { getAccountIds, getTotalTransactionsPages } from "@/lib/data/transactions";
+import { getAccountIds, getAllTags, getTotalTransactionsPages } from "@/lib/data/transactions";
 import { redirect } from "next/navigation";
 import { Suspense } from "react";
 
@@ -11,17 +12,22 @@ export default async function TransactionsPage(props: {
     query?: string;
     page?: string;
     account_id?: string;
+    tags?: string;
   }>;
 }) {
   const searchParams = await props.searchParams;
   const accountId = searchParams?.account_id || undefined;
   const accountIds = await getAccountIds();
-  const totalPages = await getTotalTransactionsPages({ accountId });
+  const allTags = getAllTags();
+  const tags = (searchParams?.tags?.split(',').map((tag) => tag.trim()).filter(Boolean) ?? [])
+    .filter((tag) => allTags.includes(tag));
+  const totalPages = await getTotalTransactionsPages({ accountId, tags });
   let currentPage = Number(searchParams?.page) || 1;
   if (totalPages > 0 && currentPage > totalPages) {
     currentPage = totalPages;
     const params = new URLSearchParams();
     if (accountId) params.set('account_id', accountId);
+    if (tags.length > 0) params.set('tags', tags.join(','));
     params.set('page', currentPage.toString());
     redirect(`/transactions?${params.toString()}`);
   }
@@ -35,9 +41,11 @@ export default async function TransactionsPage(props: {
         <AccountSelect accountIds={accountIds} selected={accountId} />
       </div>
 
+      <TagFilter allTags={allTags} selected={tags} />
+
       <div className="rounded-xl border border-line-2 bg-card overflow-hidden">
         <Suspense fallback={<p className="p-6 text-sm text-muted-foreground-1">Fetching transactions...</p>}>
-          <TransactionsTable currentPage={currentPage} accountId={accountId} />
+          <TransactionsTable currentPage={currentPage} accountId={accountId} tags={tags} />
         </Suspense>
       </div>
 
