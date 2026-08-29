@@ -14,3 +14,11 @@ CREATE TABLE IF NOT EXISTS transactions (
 INSERT INTO transactions (fitid, account_id, account_type, dtposted, trnamt, name, memo, currency) VALUES
     ('123456789', '123456', 'CHECKING', '2025-05-17', -210.00, 'NOISY LE ROI 4       17/05 08H53', 'RETRAIT AU DISTRIBUTEUR NOISY LE ROI 4       17/05 08H53', 'EUR'),
     ('987654321', '123 38XX XXXX 456', 'CREDITCARD', '2025-04-10', -98.83, 'UEP*SUPER U NOISY LE ROI', '.', 'EUR');
+
+CREATE TABLE IF NOT EXISTS imports (
+    import_id       TEXT PRIMARY KEY,   -- file identifier
+    file_name       TEXT NOT NULL,      -- imported file name
+    import_date     DATE NOT NULL,      -- date of the import
+    comment         TEXT                -- free-text comment
+);
+

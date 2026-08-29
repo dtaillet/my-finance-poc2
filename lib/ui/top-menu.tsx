@@ -31,6 +31,12 @@ export default function TopMenu() {
         >
           Transactions
         </Link>
+        <Link
+          href="/imports"
+          className="text-sm font-medium text-muted-foreground-1 transition-colors hover:text-foreground"
+        >
+          Imports
+        </Link>
       </nav>
     </header>
   );
