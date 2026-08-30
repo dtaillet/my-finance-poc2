@@ -3,7 +3,7 @@ import Link from "next/link";
 export default function TopMenu() {
   return (
     <header className="w-full border-b border-line-2 bg-card">
-      <nav className="mx-auto flex max-w-5xl items-center gap-6 px-6 py-3">
+      <nav className="mx-auto flex max-w-screen-2xl items-center gap-6 px-6 py-3">
         <Link
           href="/"
           aria-label="Home"

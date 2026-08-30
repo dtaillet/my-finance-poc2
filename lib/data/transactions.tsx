@@ -35,8 +35,8 @@ export function importTransactions(transactions: OfxTransaction[]) {
 }
 
 // Builds a WHERE clause and bound params shared by list and count queries.
-// Tags use OR semantics: a transaction matches if it carries any selected tag.
-function buildTransactionFilter({ accountIds, tags }: { accountIds?: string[]; tags?: string[] }) {
+// Tags and searches use OR semantics within each group; groups are combined with AND.
+function buildTransactionFilter({ accountIds, tags, searches }: { accountIds?: string[]; tags?: string[]; searches?: string[] }) {
   const conditions: string[] = [];
   const params: (string | number)[] = [];
   if (accountIds && accountIds.length > 0) {
@@ -63,14 +63,18 @@ function buildTransactionFilter({ accountIds, tags }: { accountIds?: string[]; t
       conditions.push(`(${tagConditions.join(' OR ')})`);
     }
   }
+  if (searches && searches.length > 0) {
+    conditions.push(`(${searches.map(() => 'name LIKE ?').join(' OR ')})`);
+    params.push(...searches.map((term) => `%${term}%`));
+  }
   const where = conditions.length > 0 ? `WHERE ${conditions.join(' AND ')}` : '';
   return { where, params };
 }
 
-export async function getTransactions({ currentPage, accountIds, tags }: { currentPage: number; accountIds?: string[]; tags?: string[] }) {
+export async function getTransactions({ currentPage, accountIds, tags, searches }: { currentPage: number; accountIds?: string[]; tags?: string[]; searches?: string[] }) {
   await new Promise((resolve) => setTimeout(resolve, 20));
   const offset = (currentPage - 1) * pageSize;
-  const { where, params } = buildTransactionFilter({ accountIds, tags });
+  const { where, params } = buildTransactionFilter({ accountIds, tags, searches });
   const rows = db
     .prepare(`SELECT ROW_NUMBER() OVER (ORDER BY dtposted DESC) AS row_num, * FROM transactions ${where} ORDER BY dtposted DESC LIMIT ? OFFSET ?`)
     .all(...params, pageSize, offset);
@@ -79,8 +83,8 @@ export async function getTransactions({ currentPage, accountIds, tags }: { curre
   return rows.map((row) => ({ ...row, tags: tagsByFitid.get(row.fitid) ?? [] }));
 }
 
-export async function getTotalTransactionsPages({ accountIds, tags }: { accountIds?: string[]; tags?: string[] } = {}) {
-  const { where, params } = buildTransactionFilter({ accountIds, tags });
+export async function getTotalTransactionsPages({ accountIds, tags, searches }: { accountIds?: string[]; tags?: string[]; searches?: string[] } = {}) {
+  const { where, params } = buildTransactionFilter({ accountIds, tags, searches });
   const totalTransactions = db.prepare(`SELECT COUNT(*) AS count FROM transactions ${where}`).get(...params).count;
   return Math.ceil(totalTransactions / pageSize);
 }

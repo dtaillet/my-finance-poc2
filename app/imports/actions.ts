@@ -24,7 +24,7 @@ export async function createImport(_prevState: ImportFormState, formData: FormDa
   }
 
   const buffer = Buffer.from(await file.arrayBuffer());
-  const content = buffer.toString('latin1');
+  const content = buffer.toString('utf8');
 
   if (!isOfx(content)) {
     return { error: 'The selected file is not a valid OFX (Open Financial Exchange) file.' };
