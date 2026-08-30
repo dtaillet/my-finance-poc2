@@ -1,9 +1,30 @@
 'use server';
 
 import { revalidatePath } from 'next/cache';
-import { addTag, removeTag } from '@/lib/data/transactions';
+import { addTag, removeComment, removeTag, setComment } from '@/lib/data/transactions';
 
 export type TagActionState = { error?: string };
+
+const MAX_COMMENT_LENGTH = 500;
+
+export async function setTransactionComment(fitid: string, comment: string): Promise<TagActionState> {
+  if (!fitid) return { error: 'Missing transaction.' };
+  const trimmed = comment.trim().slice(0, MAX_COMMENT_LENGTH);
+  if (trimmed.length === 0) {
+    removeComment(fitid);
+  } else {
+    setComment(fitid, trimmed);
+  }
+  revalidatePath('/transactions');
+  return {};
+}
+
+export async function removeTransactionComment(fitid: string): Promise<TagActionState> {
+  if (!fitid) return { error: 'Missing transaction.' };
+  removeComment(fitid);
+  revalidatePath('/transactions');
+  return {};
+}
 
 function normalizeTag(raw: string): string {
   return raw.trim().toLowerCase().slice(0, 30);

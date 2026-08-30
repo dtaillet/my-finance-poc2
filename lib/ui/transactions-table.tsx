@@ -1,5 +1,6 @@
 import { getAllTags, getTransactions } from "@/lib/data/transactions";
 import TransactionTags from "@/lib/ui/transaction-tags";
+import TransactionComment from "@/lib/ui/transaction-comment";
 import AddToFilter from "@/lib/ui/add-to-filter";
 
 export default async function TransactionsTable({ currentPage, accountIds, tags, searches }: { currentPage: number; accountIds?: string[]; tags?: string[]; searches?: string[] }) {
@@ -22,6 +23,7 @@ export default async function TransactionsTable({ currentPage, accountIds, tags,
               <th scope="col" className="w-full px-4 py-3 text-start text-xs font-medium text-muted-foreground-1 uppercase tracking-wide">Name</th>
               <th scope="col" className="px-4 py-3 text-end text-xs font-medium text-muted-foreground-1 uppercase tracking-wide">Amount</th>
               <th scope="col" className="px-4 py-3 text-start text-xs font-medium text-muted-foreground-1 uppercase tracking-wide">Tags</th>
+              <th scope="col" className="px-4 py-3 text-start text-xs font-medium text-muted-foreground-1 uppercase tracking-wide">Comment</th>
               <th scope="col" className="px-4 py-3 text-start text-xs font-medium text-muted-foreground-1 uppercase tracking-wide">Actions</th>
             </tr>
           </thead>
@@ -39,6 +41,7 @@ export default async function TransactionsTable({ currentPage, accountIds, tags,
                 </td>
                 <td className={`px-4 py-3 whitespace-nowrap text-sm text-end font-medium tabular-nums ${transaction.trnamt < 0 ? "text-red-500" : "text-emerald-600 dark:text-emerald-500"}`}>{eurFormatter.format(transaction.trnamt)}</td>
                 <td className="px-4 py-3 whitespace-nowrap text-sm"><TransactionTags fitid={transaction.fitid} tags={transaction.tags} suggestions={allTags} /></td>
+                <td className="px-4 py-3 whitespace-nowrap text-sm"><TransactionComment fitid={transaction.fitid} comment={transaction.comment} /></td>
                 <td className="px-4 py-3 whitespace-nowrap text-sm"><AddToFilter name={transaction.name} /></td>
               </tr>
             ))}

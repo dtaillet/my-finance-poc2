@@ -14,6 +14,14 @@ db.exec(
   )`,
 );
 
+db.exec(
+  `CREATE TABLE IF NOT EXISTS transaction_comments (
+    fitid   TEXT PRIMARY KEY,
+    comment TEXT NOT NULL,
+    FOREIGN KEY (fitid) REFERENCES transactions(fitid) ON DELETE CASCADE
+  )`,
+);
+
 // Inserts transactions, ignoring any whose fitid already exists.
 // Returns how many were imported and how many were ignored.
 export function importTransactions(transactions: OfxTransaction[]) {
@@ -79,8 +87,10 @@ export async function getTransactions({ currentPage, accountIds, tags, searches 
     .prepare(`SELECT ROW_NUMBER() OVER (ORDER BY dtposted DESC) AS row_num, * FROM transactions ${where} ORDER BY dtposted DESC LIMIT ? OFFSET ?`)
     .all(...params, pageSize, offset);
 
-  const tagsByFitid = getTagsForTransactions(rows.map((row) => row.fitid));
-  return rows.map((row) => ({ ...row, tags: tagsByFitid.get(row.fitid) ?? [] }));
+  const fitids = rows.map((row) => row.fitid);
+  const tagsByFitid = getTagsForTransactions(fitids);
+  const commentsByFitid = getCommentsForTransactions(fitids);
+  return rows.map((row) => ({ ...row, tags: tagsByFitid.get(row.fitid) ?? [], comment: commentsByFitid.get(row.fitid) ?? null }));
 }
 
 export async function getTotalTransactionsPages({ accountIds, tags, searches }: { accountIds?: string[]; tags?: string[]; searches?: string[] } = {}) {
@@ -116,4 +126,25 @@ export function removeTag(fitid: string, tag: string) {
 
 export function getAllTags(): string[] {
   return db.prepare('SELECT DISTINCT tag FROM transaction_tags ORDER BY tag').all().map((row) => row.tag);
+}
+
+export function getCommentsForTransactions(fitids: string[]): Map<string, string> {
+  const commentsByFitid = new Map<string, string>();
+  if (fitids.length === 0) return commentsByFitid;
+  const placeholders = fitids.map(() => '?').join(', ');
+  const rows = db.prepare(`SELECT fitid, comment FROM transaction_comments WHERE fitid IN (${placeholders})`).all(...fitids);
+  for (const row of rows) {
+    commentsByFitid.set(row.fitid, row.comment);
+  }
+  return commentsByFitid;
+}
+
+export function setComment(fitid: string, comment: string) {
+  db.prepare(
+    'INSERT INTO transaction_comments (fitid, comment) VALUES (?, ?) ON CONFLICT(fitid) DO UPDATE SET comment = excluded.comment',
+  ).run(fitid, comment);
+}
+
+export function removeComment(fitid: string) {
+  db.prepare('DELETE FROM transaction_comments WHERE fitid = ?').run(fitid);
 }
