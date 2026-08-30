@@ -29,3 +29,16 @@ CREATE TABLE IF NOT EXISTS transaction_tags (
     FOREIGN KEY (fitid) REFERENCES transactions(fitid) ON DELETE CASCADE
 );
 
+CREATE TABLE IF NOT EXISTS filters (
+    filter_id       TEXT PRIMARY KEY,   -- filter identifier
+    name            TEXT NOT NULL,      -- filter name
+    tag             TEXT NOT NULL       -- normalized tag to apply (trimmed, lowercase, <=30 chars)
+);
+
+CREATE TABLE IF NOT EXISTS filter_values (
+    filter_id       TEXT NOT NULL,      -- filters.filter_id
+    value           TEXT NOT NULL,      -- search string value
+    PRIMARY KEY (filter_id, value),
+    FOREIGN KEY (filter_id) REFERENCES filters(filter_id) ON DELETE CASCADE
+);
+

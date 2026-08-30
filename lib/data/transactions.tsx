@@ -72,7 +72,7 @@ export async function getTransactions({ currentPage, accountIds, tags }: { curre
   const offset = (currentPage - 1) * pageSize;
   const { where, params } = buildTransactionFilter({ accountIds, tags });
   const rows = db
-    .prepare(`SELECT ROW_NUMBER() OVER (ORDER BY fitid) AS row_num, * FROM transactions ${where} LIMIT ? OFFSET ?`)
+    .prepare(`SELECT ROW_NUMBER() OVER (ORDER BY dtposted DESC) AS row_num, * FROM transactions ${where} ORDER BY dtposted DESC LIMIT ? OFFSET ?`)
     .all(...params, pageSize, offset);
 
   const tagsByFitid = getTagsForTransactions(rows.map((row) => row.fitid));
