@@ -57,8 +57,9 @@ export default function TransactionTags({ fitid, tags, suggestions }: { fitid: s
   const availableSuggestions = suggestions.filter((tag) => !optimisticTags.includes(tag));
 
   return (
-    <div className="flex flex-wrap items-center gap-1.5">
+    <div className="flex flex-nowrap items-center gap-1.5">
       {optimisticTags.map((tag) => (
+
         <span
           key={tag}
           className="inline-flex items-center gap-1 rounded-full border border-line-2 bg-muted-hover px-2 py-0.5 text-xs text-foreground"
