@@ -13,6 +13,7 @@ export default function ClearFilters({ hasFilters }: { hasFilters: boolean }) {
         const params = new URLSearchParams(searchParams);
         params.delete('account_id');
         params.delete('tags');
+        params.delete('search');
         params.delete('page');
         const query = params.toString();
         router.push(query ? `${pathname}?${query}` : pathname);
