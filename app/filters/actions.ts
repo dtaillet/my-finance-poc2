@@ -93,11 +93,39 @@ export async function applyFilterTag(filterId: string): Promise<{ error?: string
   return { added };
 }
 
+// Applies the filter's tag to its current matching transactions. Returns the number tagged.
+function applyFilterTagInternal(filterId: string): number {
+  const result = getMatchingTransactions(filterId);
+  if (!result) return 0;
+  return applyTagToTransactions(result.transactions.map((transaction) => transaction.fitid), result.tag);
+}
+
 export async function listFilterOptions(name: string): Promise<FilterOptionWithMembership[]> {
   return getFilterOptionsForValue(name.trim());
 }
 
-export async function addTransactionToFilter(filterId: string, name: string): Promise<{ error?: string; success?: boolean }> {
+export async function createFilterForValue(
+  filterName: string,
+  rawTag: string,
+  value: string,
+): Promise<{ error?: string; filter?: FilterOptionWithMembership }> {
+  const name = filterName.trim();
+  const tag = normalizeTag(rawTag);
+  const seedValue = value.trim();
+
+  if (name.length === 0) return { error: 'Name cannot be empty.' };
+  if (tag.length === 0) return { error: 'Tag cannot be empty.' };
+  if (seedValue.length === 0) return { error: 'Transaction name is empty.' };
+
+  const filterId = randomUUID();
+  insertFilter({ filterId, name, tag, values: [seedValue] });
+  const added = applyFilterTagInternal(filterId);
+  revalidatePath('/filters');
+  revalidatePath('/transactions');
+  return { filter: { filter_id: filterId, name, tag, hasValue: true }, added };
+}
+
+export async function addTransactionToFilter(filterId: string, name: string): Promise<{ error?: string; success?: boolean; added?: number }> {
   const value = name.trim();
   if (!filterId) return { error: 'Missing filter.' };
   if (value.length === 0) return { error: 'Transaction name is empty.' };
@@ -105,9 +133,10 @@ export async function addTransactionToFilter(filterId: string, name: string): Pr
   const ok = addValueToFilter(filterId, value);
   if (!ok) return { error: 'Filter not found.' };
 
+  const added = applyFilterTagInternal(filterId);
   revalidatePath('/filters');
   revalidatePath('/transactions');
-  return { success: true };
+  return { success: true, added };
 }
 
 export async function removeTransactionFromFilter(filterId: string, name: string): Promise<{ error?: string; success?: boolean }> {

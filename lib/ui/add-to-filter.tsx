@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useTransition } from 'react';
 import { useRouter } from 'next/navigation';
-import { addTransactionToFilter, listFilterOptions, removeTransactionFromFilter } from '@/app/filters/actions';
+import { addTransactionToFilter, createFilterForValue, listFilterOptions, removeTransactionFromFilter } from '@/app/filters/actions';
 import type { FilterOptionWithMembership } from '@/lib/data/filters';
 
 export default function AddToFilter({ name }: { name: string }) {
@@ -31,6 +31,9 @@ function AddToFilterDialog({ name, onClose }: { name: string; onClose: () => voi
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
+  const [creating, setCreating] = useState(false);
+  const [newName, setNewName] = useState('');
+  const [newTag, setNewTag] = useState('');
 
   useEffect(() => {
     let active = true;
@@ -58,7 +61,40 @@ function AddToFilterDialog({ name, onClose }: { name: string; onClose: () => voi
           option.filter_id === filter.filter_id ? { ...option, hasValue: !filter.hasValue } : option,
         ) ?? current,
       );
-      setSuccess(filter.hasValue ? `Removed from "${filter.name}".` : `Added to "${filter.name}".`);
+      if (filter.hasValue) {
+        setSuccess(`Removed from "${filter.name}".`);
+      } else {
+        const added = result.added ?? 0;
+        setSuccess(
+          added > 0
+            ? `Added to "${filter.name}" and tagged ${added} transaction${added === 1 ? '' : 's'}.`
+            : `Added to "${filter.name}".`,
+        );
+      }
+      router.refresh();
+    });
+  }
+
+  function handleCreate() {
+    setError(null);
+    setSuccess(null);
+    startTransition(async () => {
+      const result = await createFilterForValue(newName, newTag, name);
+      if (result.error || !result.filter) {
+        setError(result.error ?? 'Could not create filter.');
+        return;
+      }
+      const created = result.filter;
+      setOptions((current) => [...(current ?? []), created].sort((a, b) => a.name.localeCompare(b.name)));
+      const added = result.added ?? 0;
+      setSuccess(
+        added > 0
+          ? `Created "${created.name}" and tagged ${added} transaction${added === 1 ? '' : 's'}.`
+          : `Created "${created.name}" and added "${name}".`,
+      );
+      setNewName('');
+      setNewTag('');
+      setCreating(false);
       router.refresh();
     });
   }
@@ -92,7 +128,7 @@ function AddToFilterDialog({ name, onClose }: { name: string; onClose: () => voi
         {options === null ? (
           <p className="text-sm text-muted-foreground-1">Loading filters…</p>
         ) : options.length === 0 ? (
-          <p className="text-sm text-muted-foreground-1">No filters yet. Create one on the Filters page.</p>
+          <p className="text-sm text-muted-foreground-1">No filters yet. Create one below.</p>
         ) : (
           <ul className="flex max-h-64 flex-col gap-1 overflow-y-auto">
             {options.map((filter) => (
@@ -130,6 +166,76 @@ function AddToFilterDialog({ name, onClose }: { name: string; onClose: () => voi
             ))}
           </ul>
         )}
+
+        <div className="mt-4 border-t border-line-2 pt-4">
+          {creating ? (
+            <div className="flex flex-col gap-3">
+              <div className="flex flex-col gap-1.5">
+                <label htmlFor="new-filter-name" className="text-sm font-medium text-foreground">Filter name</label>
+                <input
+                  id="new-filter-name"
+                  type="text"
+                  value={newName}
+                  onChange={(event) => setNewName(event.target.value)}
+                  disabled={pending}
+                  className="block w-full rounded-lg border border-line-2 bg-white px-3 py-2 text-sm text-foreground focus:outline-hidden disabled:opacity-50 dark:bg-black"
+                  placeholder="Filter name"
+                />
+              </div>
+              <div className="flex flex-col gap-1.5">
+                <label htmlFor="new-filter-tag" className="text-sm font-medium text-foreground">Tag</label>
+                <input
+                  id="new-filter-tag"
+                  type="text"
+                  maxLength={30}
+                  value={newTag}
+                  onChange={(event) => setNewTag(event.target.value)}
+                  disabled={pending}
+                  className="block w-full rounded-lg border border-line-2 bg-white px-3 py-2 text-sm text-foreground focus:outline-hidden disabled:opacity-50 dark:bg-black"
+                  placeholder="tag to apply"
+                />
+              </div>
+              <p className="text-xs text-muted-foreground-1">
+                The new filter starts with <span className="font-medium text-foreground">{name}</span> as its search value.
+              </p>
+              <div className="flex justify-end gap-2">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setCreating(false);
+                    setNewName('');
+                    setNewTag('');
+                  }}
+                  disabled={pending}
+                  className="rounded-lg border border-line-2 px-3 py-1.5 text-sm font-medium text-foreground transition-colors hover:bg-muted-hover disabled:opacity-50"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  onClick={handleCreate}
+                  disabled={pending}
+                  className="inline-flex items-center gap-2 rounded-lg bg-foreground px-3 py-1.5 text-sm font-medium text-background transition-opacity hover:opacity-90 focus:outline-hidden disabled:opacity-50"
+                >
+                  {pending ? 'Creating…' : 'Create filter'}
+                </button>
+              </div>
+            </div>
+          ) : (
+            <button
+              type="button"
+              onClick={() => {
+                setError(null);
+                setSuccess(null);
+                setCreating(true);
+              }}
+              className="inline-flex items-center gap-1 rounded-lg border border-dashed border-line-2 px-3 py-1.5 text-sm font-medium text-foreground transition-colors hover:bg-muted-hover focus:outline-hidden"
+            >
+              <svg className="size-4" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14" /><path d="M12 5v14" /></svg>
+              New filter
+            </button>
+          )}
+        </div>
 
         {error && <p className="mt-4 text-sm text-red-500" role="alert">{error}</p>}
         {success && <p className="mt-4 text-sm text-emerald-600 dark:text-emerald-500" role="status">{success}</p>}
