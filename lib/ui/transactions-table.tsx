@@ -13,13 +13,13 @@ export default async function TransactionsTable({ currentPage, accountIds, tags,
   return (
     <div className="min-w-full">
       <div className="overflow-x-auto [&::-webkit-scrollbar]:h-2 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-track]:bg-scrollbar-track [&::-webkit-scrollbar-thumb]:bg-scrollbar-thumb">
-        <table className="min-w-full divide-y divide-table-line">
+        <table className="w-full min-w-full divide-y divide-table-line">
           <thead>
             <tr>
               <th scope="col" className="px-4 py-3 text-start text-xs font-medium text-muted-foreground-1 uppercase tracking-wide">#</th>
               <th scope="col" className="px-4 py-3 text-start text-xs font-medium text-muted-foreground-1 uppercase tracking-wide">Account</th>
               <th scope="col" className="px-4 py-3 text-start text-xs font-medium text-muted-foreground-1 uppercase tracking-wide">Date</th>
-              <th scope="col" className="px-4 py-3 text-start text-xs font-medium text-muted-foreground-1 uppercase tracking-wide">Name</th>
+              <th scope="col" className="w-full px-4 py-3 text-start text-xs font-medium text-muted-foreground-1 uppercase tracking-wide">Name</th>
               <th scope="col" className="px-4 py-3 text-end text-xs font-medium text-muted-foreground-1 uppercase tracking-wide">Amount</th>
               <th scope="col" className="px-4 py-3 text-start text-xs font-medium text-muted-foreground-1 uppercase tracking-wide">Tags</th>
               <th scope="col" className="px-4 py-3 text-start text-xs font-medium text-muted-foreground-1 uppercase tracking-wide">Actions</th>

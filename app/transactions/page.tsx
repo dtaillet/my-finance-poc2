@@ -41,7 +41,7 @@ export default async function TransactionsPage(props: {
   }
 
   return (
-    <main className="flex flex-1 flex-col w-full max-w-5xl mx-auto px-6 py-10 gap-6">
+    <main className="flex flex-1 flex-col w-full max-w-screen-2xl mx-auto px-6 py-10 gap-6">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <h1 className="text-2xl font-semibold tracking-tight text-foreground">
           Transactions
