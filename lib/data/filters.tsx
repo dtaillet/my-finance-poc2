@@ -154,15 +154,23 @@ function escapeLike(value: string): string {
   return value.replace(/[\\%_]/g, (ch) => `\\${ch}`);
 }
 
-// Returns the filter tag and the transactions whose name contains any search
-// value (case-insensitive) and that do not already carry the tag.
+// Returns the filter tag and the transactions whose name or memo contains any
+// search value (case-insensitive) and that do not already carry the tag.
 export function getMatchingTransactions(filterId: string): { tag: string; transactions: MatchingTransaction[] } | null {
   const filter = getFilterById(filterId);
   if (!filter) return null;
   if (filter.values.length === 0) return { tag: filter.tag, transactions: [] };
 
-  const conditions = filter.values.map(() => `LOWER(name) LIKE '%' || LOWER(?) || '%' ESCAPE '\\'`).join(' OR ');
-  const params = filter.values.map((value) => escapeLike(value));
+  const conditions = filter.values
+    .map(
+      () =>
+        `(LOWER(name) LIKE '%' || LOWER(?) || '%' ESCAPE '\\' OR LOWER(memo) LIKE '%' || LOWER(?) || '%' ESCAPE '\\')`,
+    )
+    .join(' OR ');
+  const params = filter.values.flatMap((value) => {
+    const escapedValue = escapeLike(value);
+    return [escapedValue, escapedValue];
+  });
   const transactions = db
     .prepare(
       `SELECT fitid, account_id, dtposted, trnamt, name, currency
