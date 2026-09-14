@@ -49,6 +49,12 @@ export default function TopMenu() {
         >
           Accounts
         </Link>
+        <Link
+          href="/credit-cards"
+          className="text-sm font-medium text-muted-foreground-1 transition-colors hover:text-foreground"
+        >
+          Credit cards
+        </Link>
       </nav>
     </header>
   );

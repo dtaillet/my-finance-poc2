@@ -28,6 +28,14 @@ CREATE TABLE IF NOT EXISTS accounts (
     account_number  TEXT NOT NULL UNIQUE -- bank account number
 );
 
+CREATE TABLE IF NOT EXISTS credit_cards (
+    id                  TEXT PRIMARY KEY,    -- managed credit card identifier
+    description         TEXT NOT NULL,       -- credit card description
+    credit_card_number  TEXT NOT NULL UNIQUE,-- credit card number
+    account_id          TEXT,                -- optional managed account identifier
+    FOREIGN KEY (account_id) REFERENCES accounts(id) ON DELETE SET NULL
+);
+
 CREATE TABLE IF NOT EXISTS transaction_tags (
     fitid           TEXT NOT NULL,      -- transactions.fitid
     tag             TEXT NOT NULL,      -- normalized tag (trimmed, lowercase, <=30 chars)

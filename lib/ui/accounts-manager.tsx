@@ -66,7 +66,6 @@ export default function AccountsManager({ accounts }: { accounts: Account[] }) {
                   <input type="checkbox" checked={allSelected} onChange={toggleAll} disabled={accounts.length === 0} aria-label="Select all accounts" className="size-4 accent-foreground disabled:opacity-50" />
                 </th>
                 <th scope="col" className="px-4 py-3 text-start text-xs font-medium uppercase tracking-wide text-muted-foreground-1">#</th>
-                <th scope="col" className="px-4 py-3 text-start text-xs font-medium uppercase tracking-wide text-muted-foreground-1">ID</th>
                 <th scope="col" className="px-4 py-3 text-start text-xs font-medium uppercase tracking-wide text-muted-foreground-1">Description</th>
                 <th scope="col" className="px-4 py-3 text-start text-xs font-medium uppercase tracking-wide text-muted-foreground-1">Account number</th>
                 <th scope="col" className="px-4 py-3 text-end text-xs font-medium uppercase tracking-wide text-muted-foreground-1">Actions</th>
@@ -74,13 +73,12 @@ export default function AccountsManager({ accounts }: { accounts: Account[] }) {
             </thead>
             <tbody className="divide-y divide-table-line">
               {accounts.length === 0 ? (
-                <tr><td colSpan={6} className="px-4 py-6 text-center text-sm text-muted-foreground-1">No accounts found.</td></tr>
+                <tr><td colSpan={5} className="px-4 py-6 text-center text-sm text-muted-foreground-1">No accounts found.</td></tr>
               ) : (
                 accounts.map((account) => (
                   <tr key={account.id} className="hover:bg-muted-hover">
                     <td className="px-4 py-3"><input type="checkbox" checked={selected.has(account.id)} onChange={() => toggleOne(account.id)} aria-label={`Select account ${account.description}`} className="size-4 accent-foreground" /></td>
                     <td className="px-4 py-3 whitespace-nowrap text-sm text-muted-foreground-1">{account.row_num}</td>
-                    <td className="px-4 py-3 whitespace-nowrap font-mono text-xs text-muted-foreground-1">{account.id}</td>
                     <td className="px-4 py-3 whitespace-nowrap text-sm text-foreground">{account.description}</td>
                     <td className="px-4 py-3 whitespace-nowrap text-sm text-muted-foreground-1">{account.account_number}</td>
                     <td className="px-4 py-3 text-end"><AccountForm account={account} /></td>

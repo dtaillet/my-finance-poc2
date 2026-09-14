@@ -76,19 +76,6 @@ function AccountDialog({ account, onClose }: { account?: Account; onClose: () =>
         <form action={formAction} className="flex flex-col gap-4">
           {isEdit && <input type="hidden" name="id" value={account?.id} />}
 
-          {isEdit && (
-            <div className="flex flex-col gap-1.5">
-              <label htmlFor="account-id" className="text-sm font-medium text-foreground">ID</label>
-              <input
-                id="account-id"
-                type="text"
-                value={account?.id}
-                readOnly
-                className="block w-full rounded-lg border border-line-2 bg-muted-hover px-3 py-2 font-mono text-sm text-muted-foreground-1"
-              />
-            </div>
-          )}
-
           <div className="flex flex-col gap-1.5">
             <label htmlFor="description" className="text-sm font-medium text-foreground">Description</label>
             <input

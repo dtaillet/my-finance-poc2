@@ -3,6 +3,8 @@ import sql from 'better-sqlite3';
 const db = sql('database/transactions.db');
 const pageSize = 10;
 
+db.pragma('foreign_keys = ON');
+
 db.exec(
   `CREATE TABLE IF NOT EXISTS accounts (
     id              TEXT PRIMARY KEY,
@@ -17,6 +19,14 @@ export type Account = {
   account_number: string;
   row_num: number;
 };
+
+export type AccountOption = Omit<Account, 'row_num'>;
+
+export async function getAccountOptions(): Promise<AccountOption[]> {
+  return db
+    .prepare('SELECT id, description, account_number FROM accounts ORDER BY description, id')
+    .all() as AccountOption[];
+}
 
 export async function getAccounts({ currentPage }: { currentPage: number }): Promise<Account[]> {
   const offset = (currentPage - 1) * pageSize;
