@@ -116,6 +116,23 @@ export async function getAccountIds() {
     .map((row) => row.account_id);
 }
 
+export type AccountOption = {
+  account_id: string;
+  label: string;
+};
+
+export async function getAccountOptions(): Promise<AccountOption[]> {
+  return db
+    .prepare(
+      `SELECT DISTINCT t.account_id, COALESCE(a.description, c.description, t.account_id) AS label
+       FROM transactions t
+       LEFT JOIN accounts a ON a.account_number = t.account_id
+       LEFT JOIN credit_cards c ON c.credit_card_number = t.account_id
+       ORDER BY label, t.account_id`,
+    )
+    .all() as AccountOption[];
+}
+
 export function getTagsForTransactions(fitids: string[]): Map<string, string[]> {
   const tagsByFitid = new Map<string, string[]>();
   if (fitids.length === 0) return tagsByFitid;

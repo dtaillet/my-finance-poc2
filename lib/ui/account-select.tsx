@@ -2,15 +2,16 @@
 
 import { useMemo } from 'react';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
+import type { AccountOption } from '@/lib/data/transactions';
 
-export default function AccountSelect({ accountIds, selected }: { accountIds: string[]; selected: string[] }) {
+export default function AccountSelect({ accounts, selected }: { accounts: AccountOption[]; selected: string[] }) {
     const pathname = usePathname();
     const router = useRouter();
     const searchParams = useSearchParams();
 
     const availableAccounts = useMemo(
-        () => accountIds.filter((accountId) => !selected.includes(accountId)),
-        [accountIds, selected],
+        () => accounts.filter((account) => !selected.includes(account.account_id)),
+        [accounts, selected],
     );
 
     function updateAccounts(accounts: string[]) {
@@ -25,7 +26,7 @@ export default function AccountSelect({ accountIds, selected }: { accountIds: st
     }
 
     function addAccount(accountId: string) {
-        if (!accountIds.includes(accountId) || selected.includes(accountId)) return;
+        if (!accounts.some((account) => account.account_id === accountId) || selected.includes(accountId)) return;
         updateAccounts([...selected, accountId]);
     }
 
@@ -40,8 +41,8 @@ export default function AccountSelect({ accountIds, selected }: { accountIds: st
             className="py-2 px-3 text-sm rounded-lg border border-line-2 bg-white text-foreground dark:bg-black focus:outline-hidden disabled:opacity-50"
         >
             <option value="">{selected.length > 0 ? 'Add account' : 'All accounts'}</option>
-            {availableAccounts.map((accountId) => (
-                <option key={accountId} value={accountId}>{accountId}</option>
+            {availableAccounts.map((account) => (
+                <option key={account.account_id} value={account.account_id}>{account.label}</option>
             ))}
         </select>
     );

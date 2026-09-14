@@ -1,11 +1,12 @@
-import { getAllTags, getTransactions } from "@/lib/data/transactions";
+import { getAllTags, getTransactions, type AccountOption } from "@/lib/data/transactions";
 import TransactionTags from "@/lib/ui/transaction-tags";
 import TransactionComment from "@/lib/ui/transaction-comment";
 import AddToFilter from "@/lib/ui/add-to-filter";
 
-export default async function TransactionsTable({ currentPage, accountIds, tags, searches }: { currentPage: number; accountIds?: string[]; tags?: string[]; searches?: string[] }) {
+export default async function TransactionsTable({ currentPage, accountIds, tags, searches, accountOptions }: { currentPage: number; accountIds?: string[]; tags?: string[]; searches?: string[]; accountOptions: AccountOption[] }) {
   const transactions = await getTransactions({ currentPage, accountIds, tags, searches });
   const allTags = getAllTags();
+  const accountLabels = new Map(accountOptions.map((account) => [account.account_id, account.label]));
   const eurFormatter = new Intl.NumberFormat("fr-FR", {
     style: "currency",
     currency: "EUR",
@@ -31,7 +32,7 @@ export default async function TransactionsTable({ currentPage, accountIds, tags,
             {transactions.map((transaction) => (
               <tr key={transaction.fitid} className="hover:bg-muted-hover">
                 <td className="px-4 py-3 whitespace-nowrap text-sm text-muted-foreground-1">{transaction.row_num}</td>
-                <td className="px-4 py-3 whitespace-nowrap text-sm text-foreground">{transaction.account_id}</td>
+                <td className="px-4 py-3 whitespace-nowrap text-sm text-foreground">{accountLabels.get(transaction.account_id) ?? transaction.account_id}</td>
                 <td className="px-4 py-3 whitespace-nowrap text-sm text-muted-foreground-1">{dateFormatter.format(new Date(transaction.dtposted))}</td>
                 <td className="px-4 py-3 text-sm text-foreground">
                   <div className="flex flex-col">

@@ -5,7 +5,7 @@ import NameSearch from "@/lib/ui/name-search";
 import Pagination from "@/lib/ui/pagination";
 import TagFilter from "@/lib/ui/tag-filter";
 import TransactionsTable from "@/lib/ui/transactions-table";
-import { getAccountIds, getAllTags, getTotalTransactionsPages } from "@/lib/data/transactions";
+import { getAccountOptions, getAllTags, getTotalTransactionsPages } from "@/lib/data/transactions";
 import { UNTAGGED_FILTER } from "@/lib/tags";
 import { redirect } from "next/navigation";
 import { Suspense } from "react";
@@ -21,7 +21,8 @@ export default async function TransactionsPage(props: {
   }>;
 }) {
   const searchParams = await props.searchParams;
-  const accountIds = await getAccountIds();
+  const accountOptions = await getAccountOptions();
+  const accountIds = accountOptions.map((account) => account.account_id);
   const selectedAccountIds = (searchParams?.account_id?.split(',').map((id) => id.trim()).filter(Boolean) ?? [])
     .filter((id) => accountIds.includes(id));
   const allTags = getAllTags();
@@ -49,16 +50,16 @@ export default async function TransactionsPage(props: {
       </div>
 
       <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
-        <AccountSelect accountIds={accountIds} selected={selectedAccountIds} />
+        <AccountSelect accounts={accountOptions} selected={selectedAccountIds} />
         <TagFilter allTags={allTags} selected={tags} />
         <NameSearch selected={searches} />
-        <FilterChips accounts={selectedAccountIds} tags={tags} searches={searches} />
+        <FilterChips accounts={selectedAccountIds} accountOptions={accountOptions} tags={tags} searches={searches} />
         <ClearFilters hasFilters={selectedAccountIds.length > 0 || tags.length > 0 || searches.length > 0} />
       </div>
 
       <div className="rounded-xl border border-line-2 bg-card overflow-hidden">
         <Suspense fallback={<p className="p-6 text-sm text-muted-foreground-1">Fetching transactions...</p>}>
-          <TransactionsTable currentPage={currentPage} accountIds={selectedAccountIds} tags={tags} searches={searches} />
+          <TransactionsTable currentPage={currentPage} accountIds={selectedAccountIds} tags={tags} searches={searches} accountOptions={accountOptions} />
         </Suspense>
       </div>
 
