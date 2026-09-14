@@ -27,13 +27,15 @@ export type Filter = {
   values: string[];
 };
 
+export type FilterListRow = Filter & { row_num: number };
+
 function getValuesForFilters(filterIds: string[]): Map<string, string[]> {
   const valuesByFilter = new Map<string, string[]>();
   if (filterIds.length === 0) return valuesByFilter;
   const placeholders = filterIds.map(() => '?').join(', ');
   const rows = db
     .prepare(`SELECT filter_id, value FROM filter_values WHERE filter_id IN (${placeholders}) ORDER BY value`)
-    .all(...filterIds);
+    .all(...filterIds) as { filter_id: string; value: string }[];
   for (const row of rows) {
     const list = valuesByFilter.get(row.filter_id) ?? [];
     list.push(row.value);
@@ -42,18 +44,18 @@ function getValuesForFilters(filterIds: string[]): Map<string, string[]> {
   return valuesByFilter;
 }
 
-export async function getFilters({ currentPage }: { currentPage: number }): Promise<Filter[]> {
+export async function getFilters({ currentPage }: { currentPage: number }): Promise<FilterListRow[]> {
   await new Promise((resolve) => setTimeout(resolve, 20));
   const offset = (currentPage - 1) * pageSize;
   const rows = db
     .prepare('SELECT ROW_NUMBER() OVER (ORDER BY name) AS row_num, * FROM filters ORDER BY name LIMIT ? OFFSET ?')
-    .all(pageSize, offset);
+    .all(pageSize, offset) as Omit<FilterListRow, 'values'>[];
   const valuesByFilter = getValuesForFilters(rows.map((row) => row.filter_id));
   return rows.map((row) => ({ ...row, values: valuesByFilter.get(row.filter_id) ?? [] }));
 }
 
 export async function getTotalFiltersPages() {
-  const totalFilters = db.prepare('SELECT COUNT(*) AS count FROM filters').get().count;
+  const totalFilters = (db.prepare('SELECT COUNT(*) AS count FROM filters').get() as { count: number }).count;
   return Math.ceil(totalFilters / pageSize);
 }
 
@@ -91,7 +93,7 @@ export function deleteFiltersByIds(ids: string[]) {
 }
 
 export function getFilterById(filterId: string): Filter | null {
-  const row = db.prepare('SELECT * FROM filters WHERE filter_id = ?').get(filterId);
+  const row = db.prepare('SELECT * FROM filters WHERE filter_id = ?').get(filterId) as Omit<Filter, 'values'> | undefined;
   if (!row) return null;
   const values = getValuesForFilters([filterId]).get(filterId) ?? [];
   return { ...row, values };

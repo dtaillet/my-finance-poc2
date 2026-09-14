@@ -43,6 +43,12 @@ export default function TopMenu() {
         >
           Filters
         </Link>
+        <Link
+          href="/accounts"
+          className="text-sm font-medium text-muted-foreground-1 transition-colors hover:text-foreground"
+        >
+          Accounts
+        </Link>
       </nav>
     </header>
   );

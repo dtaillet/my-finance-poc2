@@ -22,6 +22,12 @@ CREATE TABLE IF NOT EXISTS imports (
     comment         TEXT                -- free-text comment
 );
 
+CREATE TABLE IF NOT EXISTS accounts (
+    id              TEXT PRIMARY KEY,   -- managed account identifier
+    description     TEXT NOT NULL,      -- account description
+    account_number  TEXT NOT NULL UNIQUE -- bank account number
+);
+
 CREATE TABLE IF NOT EXISTS transaction_tags (
     fitid           TEXT NOT NULL,      -- transactions.fitid
     tag             TEXT NOT NULL,      -- normalized tag (trimmed, lowercase, <=30 chars)

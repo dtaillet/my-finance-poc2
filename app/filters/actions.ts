@@ -108,7 +108,7 @@ export async function createFilterForValue(
   filterName: string,
   rawTag: string,
   value: string,
-): Promise<{ error?: string; filter?: FilterOptionWithMembership }> {
+): Promise<{ error?: string; filter?: FilterOptionWithMembership; added?: number }> {
   const name = filterName.trim();
   const tag = normalizeTag(rawTag);
   const seedValue = value.trim();

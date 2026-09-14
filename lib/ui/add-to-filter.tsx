@@ -64,7 +64,7 @@ function AddToFilterDialog({ name, onClose }: { name: string; onClose: () => voi
       if (filter.hasValue) {
         setSuccess(`Removed from "${filter.name}".`);
       } else {
-        const added = result.added ?? 0;
+        const added = 'added' in result && typeof result.added === 'number' ? result.added : 0;
         setSuccess(
           added > 0
             ? `Added to "${filter.name}" and tagged ${added} transaction${added === 1 ? '' : 's'}.`

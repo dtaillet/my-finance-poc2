@@ -3,14 +3,22 @@ import sql from 'better-sqlite3';
 const db = sql('database/transactions.db');
 const pageSize = 10;
 
-export async function getImports({ currentPage }: { currentPage: number }) {
+export type ImportRow = {
+  row_num: number;
+  import_id: string;
+  file_name: string;
+  import_date: string;
+  comment: string;
+};
+
+export async function getImports({ currentPage }: { currentPage: number }): Promise<ImportRow[]> {
   await new Promise((resolve) => setTimeout(resolve, 20));
   const offset = (currentPage - 1) * pageSize;
-  return db.prepare('SELECT ROW_NUMBER() OVER (ORDER BY import_date DESC, import_id) AS row_num, * FROM imports ORDER BY import_date DESC, import_id LIMIT ? OFFSET ?').all(pageSize, offset);
+  return db.prepare('SELECT ROW_NUMBER() OVER (ORDER BY import_date DESC, import_id) AS row_num, * FROM imports ORDER BY import_date DESC, import_id LIMIT ? OFFSET ?').all(pageSize, offset) as ImportRow[];
 }
 
 export async function getTotalImportsPages() {
-  const totalImports = db.prepare('SELECT COUNT(*) AS count FROM imports').get().count;
+  const totalImports = (db.prepare('SELECT COUNT(*) AS count FROM imports').get() as { count: number }).count;
   return Math.ceil(totalImports / pageSize);
 }
 

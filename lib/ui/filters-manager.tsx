@@ -5,9 +5,9 @@ import { useRouter } from 'next/navigation';
 import FilterForm from '@/lib/ui/filter-form';
 import FilterApply from '@/lib/ui/filter-apply';
 import { deleteFilters } from '@/app/filters/actions';
-import type { Filter } from '@/lib/data/filters';
+import type { FilterListRow } from '@/lib/data/filters';
 
-export default function FiltersManager({ filters }: { filters: Filter[] }) {
+export default function FiltersManager({ filters }: { filters: FilterListRow[] }) {
   const router = useRouter();
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [confirmOpen, setConfirmOpen] = useState(false);

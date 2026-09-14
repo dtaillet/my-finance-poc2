@@ -5,6 +5,18 @@ import { UNTAGGED_FILTER } from '@/lib/tags';
 const db = sql('database/transactions.db');
 const pageSize = 10;
 
+type TransactionListRow = {
+  row_num: number;
+  fitid: string;
+  account_id: string;
+  account_type: string;
+  dtposted: string;
+  trnamt: number;
+  name: string;
+  memo: string | null;
+  currency: string | null;
+};
+
 db.exec(
   `CREATE TABLE IF NOT EXISTS transaction_tags (
     fitid TEXT NOT NULL,
@@ -85,7 +97,7 @@ export async function getTransactions({ currentPage, accountIds, tags, searches 
   const { where, params } = buildTransactionFilter({ accountIds, tags, searches });
   const rows = db
     .prepare(`SELECT ROW_NUMBER() OVER (ORDER BY dtposted DESC) AS row_num, * FROM transactions ${where} ORDER BY dtposted DESC LIMIT ? OFFSET ?`)
-    .all(...params, pageSize, offset);
+    .all(...params, pageSize, offset) as TransactionListRow[];
 
   const fitids = rows.map((row) => row.fitid);
   const tagsByFitid = getTagsForTransactions(fitids);
@@ -95,19 +107,20 @@ export async function getTransactions({ currentPage, accountIds, tags, searches 
 
 export async function getTotalTransactionsPages({ accountIds, tags, searches }: { accountIds?: string[]; tags?: string[]; searches?: string[] } = {}) {
   const { where, params } = buildTransactionFilter({ accountIds, tags, searches });
-  const totalTransactions = db.prepare(`SELECT COUNT(*) AS count FROM transactions ${where}`).get(...params).count;
+  const totalTransactions = (db.prepare(`SELECT COUNT(*) AS count FROM transactions ${where}`).get(...params) as { count: number }).count;
   return Math.ceil(totalTransactions / pageSize);
 }
 
 export async function getAccountIds() {
-  return db.prepare('SELECT DISTINCT account_id FROM transactions ORDER BY account_id').all().map((row) => row.account_id);
+  return (db.prepare('SELECT DISTINCT account_id FROM transactions ORDER BY account_id').all() as { account_id: string }[])
+    .map((row) => row.account_id);
 }
 
 export function getTagsForTransactions(fitids: string[]): Map<string, string[]> {
   const tagsByFitid = new Map<string, string[]>();
   if (fitids.length === 0) return tagsByFitid;
   const placeholders = fitids.map(() => '?').join(', ');
-  const rows = db.prepare(`SELECT fitid, tag FROM transaction_tags WHERE fitid IN (${placeholders}) ORDER BY tag`).all(...fitids);
+  const rows = db.prepare(`SELECT fitid, tag FROM transaction_tags WHERE fitid IN (${placeholders}) ORDER BY tag`).all(...fitids) as { fitid: string; tag: string }[];
   for (const row of rows) {
     const list = tagsByFitid.get(row.fitid) ?? [];
     list.push(row.tag);
@@ -125,14 +138,14 @@ export function removeTag(fitid: string, tag: string) {
 }
 
 export function getAllTags(): string[] {
-  return db.prepare('SELECT DISTINCT tag FROM transaction_tags ORDER BY tag').all().map((row) => row.tag);
+  return (db.prepare('SELECT DISTINCT tag FROM transaction_tags ORDER BY tag').all() as { tag: string }[]).map((row) => row.tag);
 }
 
 export function getCommentsForTransactions(fitids: string[]): Map<string, string> {
   const commentsByFitid = new Map<string, string>();
   if (fitids.length === 0) return commentsByFitid;
   const placeholders = fitids.map(() => '?').join(', ');
-  const rows = db.prepare(`SELECT fitid, comment FROM transaction_comments WHERE fitid IN (${placeholders})`).all(...fitids);
+  const rows = db.prepare(`SELECT fitid, comment FROM transaction_comments WHERE fitid IN (${placeholders})`).all(...fitids) as { fitid: string; comment: string }[];
   for (const row of rows) {
     commentsByFitid.set(row.fitid, row.comment);
   }
