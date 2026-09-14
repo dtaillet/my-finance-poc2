@@ -4,6 +4,7 @@ import { useState, useTransition } from 'react';
 import { useRouter } from 'next/navigation';
 import ImportForm from '@/lib/ui/import-form';
 import { deleteImports } from '@/app/imports/actions';
+import type { AccountOption } from '@/lib/data/accounts';
 
 export type ImportRecord = {
   row_num: number;
@@ -18,7 +19,7 @@ const dateFormatter = new Intl.DateTimeFormat('fr-FR', {
   timeStyle: 'medium',
 });
 
-export default function ImportsManager({ imports }: { imports: ImportRecord[] }) {
+export default function ImportsManager({ imports, accounts }: { imports: ImportRecord[]; accounts: AccountOption[] }) {
   const router = useRouter();
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [confirmOpen, setConfirmOpen] = useState(false);
@@ -59,7 +60,7 @@ export default function ImportsManager({ imports }: { imports: ImportRecord[] })
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <h1 className="text-2xl font-semibold tracking-tight text-foreground">Imports</h1>
         <div className="flex items-center gap-2">
-          <ImportForm />
+          <ImportForm accounts={accounts} />
           <button
             type="button"
             onClick={() => setConfirmOpen(true)}

@@ -1,5 +1,6 @@
 import Pagination from "@/lib/ui/pagination";
 import ImportsManager, { type ImportRecord } from "@/lib/ui/imports-manager";
+import { getAccountOptions } from "@/lib/data/accounts";
 import { getImports, getTotalImportsPages } from "@/lib/data/imports";
 import { redirect } from "next/navigation";
 
@@ -16,10 +17,11 @@ export default async function ImportsPage(props: {
     redirect(`/imports?page=${currentPage.toString()}`);
   }
   const imports = (await getImports({ currentPage })) as ImportRecord[];
+  const accounts = await getAccountOptions();
 
   return (
     <main className="flex flex-1 flex-col w-full max-w-5xl mx-auto px-6 py-10 gap-6">
-      <ImportsManager imports={imports} />
+      <ImportsManager imports={imports} accounts={accounts} />
 
       <div className="flex justify-center sm:justify-end">
         <Pagination currentPage={currentPage} totalPages={totalPages} />

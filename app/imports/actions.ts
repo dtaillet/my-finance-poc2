@@ -4,8 +4,10 @@ import { randomUUID } from 'crypto';
 import { mkdir, writeFile, unlink } from 'fs/promises';
 import path from 'path';
 import { revalidatePath } from 'next/cache';
+import { getAccountOptions } from '@/lib/data/accounts';
 import { insertImport, deleteImportsByIds } from '@/lib/data/imports';
 import { isOfx, parseOfx } from '@/lib/data/ofx';
+import { isQif, parseQif } from '@/lib/data/qif';
 import { importTransactions } from '@/lib/data/transactions';
 
 export type ImportFormState = {
@@ -18,21 +20,42 @@ export type ImportFormState = {
 export async function createImport(_prevState: ImportFormState, formData: FormData): Promise<ImportFormState> {
   const file = formData.get('file');
   const comment = (formData.get('comment') as string | null)?.trim() ?? '';
+  const fileType = formData.get('fileType');
+  const accountId = formData.get('accountId');
 
   if (!(file instanceof File) || file.size === 0) {
     return { error: 'Please select a file to import.' };
   }
 
+  if (fileType !== 'ofx' && fileType !== 'qif') {
+    return { error: 'Please select a supported file type.' };
+  }
+
   const buffer = Buffer.from(await file.arrayBuffer());
   const content = buffer.toString('utf8');
 
-  if (!isOfx(content)) {
-    return { error: 'The selected file is not a valid OFX (Open Financial Exchange) file.' };
+  let transactions;
+  if (fileType === 'ofx') {
+    if (!isOfx(content)) {
+      return { error: 'The selected file is not a valid OFX (Open Financial Exchange) file.' };
+    }
+    transactions = parseOfx(content);
+  } else {
+    if (typeof accountId !== 'string') {
+      return { error: 'Please select a bank account for the QIF import.' };
+    }
+    const account = (await getAccountOptions()).find((option) => option.id === accountId);
+    if (!account) {
+      return { error: 'The selected bank account is no longer available.' };
+    }
+    if (!isQif(content)) {
+      return { error: 'The selected file is not a valid QIF (Quicken Interchange Format) file.' };
+    }
+    transactions = parseQif(content, account.account_number);
   }
 
-  const transactions = parseOfx(content);
   if (transactions.length === 0) {
-    return { error: 'No transactions found in the OFX file.' };
+    return { error: `No valid transactions found in the ${fileType.toUpperCase()} file.` };
   }
 
   const importId = randomUUID();

@@ -2,10 +2,11 @@
 
 import { useActionState, useState } from 'react';
 import { createImport, type ImportFormState } from '@/app/imports/actions';
+import type { AccountOption } from '@/lib/data/accounts';
 
 const initialState: ImportFormState = {};
 
-export default function ImportForm() {
+export default function ImportForm({ accounts }: { accounts: AccountOption[] }) {
   const [open, setOpen] = useState(false);
 
   return (
@@ -19,13 +20,28 @@ export default function ImportForm() {
         Import
       </button>
 
-      {open && <ImportDialog onClose={() => setOpen(false)} />}
+      {open && <ImportDialog accounts={accounts} onClose={() => setOpen(false)} />}
     </>
   );
 }
 
-function ImportDialog({ onClose }: { onClose: () => void }) {
+function ImportDialog({ accounts, onClose }: { accounts: AccountOption[]; onClose: () => void }) {
   const [state, formAction, pending] = useActionState(createImport, initialState);
+  const [fileType, setFileType] = useState<'ofx' | 'qif'>('ofx');
+  const [accountId, setAccountId] = useState('');
+  const [accountPickerOpen, setAccountPickerOpen] = useState(false);
+  const selectedAccount = accounts.find((account) => account.id === accountId);
+
+  function selectFileType(nextFileType: 'ofx' | 'qif') {
+    setFileType(nextFileType);
+    if (nextFileType === 'qif') setAccountPickerOpen(true);
+  }
+
+  function cancelAccountSelection() {
+    setFileType('ofx');
+    setAccountId('');
+    setAccountPickerOpen(false);
+  }
 
   return (
     <div
@@ -68,6 +84,37 @@ function ImportDialog({ onClose }: { onClose: () => void }) {
           </div>
         ) : (
           <form action={formAction} className="flex flex-col gap-4">
+            <input type="hidden" name="fileType" value={fileType} />
+            {fileType === 'qif' && <input type="hidden" name="accountId" value={accountId} />}
+
+            <div className="flex flex-col gap-1.5">
+              <label htmlFor="file-type" className="text-sm font-medium text-foreground">File type</label>
+              <select
+                id="file-type"
+                value={fileType}
+                onChange={(event) => selectFileType(event.target.value as 'ofx' | 'qif')}
+                disabled={pending}
+                className="block w-full rounded-lg border border-line-2 bg-white px-3 py-2 text-sm text-foreground focus:outline-hidden disabled:opacity-50 dark:bg-black"
+              >
+                <option value="ofx">OFX</option>
+                <option value="qif">QIF</option>
+              </select>
+            </div>
+
+            {fileType === 'qif' && (
+              <div className="flex flex-col gap-1.5">
+                <span className="text-sm font-medium text-foreground">Bank account</span>
+                <button
+                  type="button"
+                  onClick={() => setAccountPickerOpen(true)}
+                  disabled={pending}
+                  className="rounded-lg border border-line-2 px-3 py-2 text-left text-sm text-foreground transition-colors hover:bg-muted-hover disabled:opacity-50"
+                >
+                  {selectedAccount ? `${selectedAccount.description} (${selectedAccount.account_number})` : 'Select bank account'}
+                </button>
+              </div>
+            )}
+
             <div className="flex flex-col gap-1.5">
               <label htmlFor="file" className="text-sm font-medium text-foreground">File</label>
               <input
@@ -114,7 +161,7 @@ function ImportDialog({ onClose }: { onClose: () => void }) {
               </button>
               <button
                 type="submit"
-                disabled={pending}
+                disabled={pending || (fileType === 'qif' && !accountId)}
                 className="inline-flex items-center gap-2 rounded-lg bg-foreground px-4 py-2 text-sm font-medium text-background transition-opacity hover:opacity-90 focus:outline-hidden disabled:opacity-50"
               >
                 {pending ? 'Importing…' : 'Validate import'}
@@ -123,6 +170,38 @@ function ImportDialog({ onClose }: { onClose: () => void }) {
           </form>
         )}
       </div>
+
+      {accountPickerOpen && (
+        <div
+          className="fixed inset-0 z-60 flex items-center justify-center bg-black/50 p-4"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="qif-account-dialog-title"
+        >
+          <div className="w-full max-w-md rounded-xl border border-line-2 bg-card p-6 shadow-xl">
+            <h3 id="qif-account-dialog-title" className="text-lg font-semibold text-foreground">Select bank account</h3>
+            <div className="mt-4 flex flex-col gap-1.5">
+              <label htmlFor="qif-account" className="text-sm font-medium text-foreground">Account</label>
+              <select
+                id="qif-account"
+                value={accountId}
+                onChange={(event) => setAccountId(event.target.value)}
+                className="block w-full rounded-lg border border-line-2 bg-white px-3 py-2 text-sm text-foreground focus:outline-hidden dark:bg-black"
+              >
+                <option value="">Select an account</option>
+                {accounts.map((account) => (
+                  <option key={account.id} value={account.id}>{account.description} ({account.account_number})</option>
+                ))}
+              </select>
+            </div>
+            {accounts.length === 0 && <p className="mt-3 text-sm text-red-500" role="alert">Create a bank account before importing a QIF file.</p>}
+            <div className="mt-6 flex justify-end gap-2">
+              <button type="button" onClick={cancelAccountSelection} className="rounded-lg border border-line-2 px-4 py-2 text-sm font-medium text-foreground transition-colors hover:bg-muted-hover">Cancel</button>
+              <button type="button" onClick={() => setAccountPickerOpen(false)} disabled={!accountId} className="rounded-lg bg-foreground px-4 py-2 text-sm font-medium text-background transition-opacity hover:opacity-90 disabled:opacity-50">Select</button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
