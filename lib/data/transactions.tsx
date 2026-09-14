@@ -84,8 +84,8 @@ function buildTransactionFilter({ accountIds, tags, searches }: { accountIds?: s
     }
   }
   if (searches && searches.length > 0) {
-    conditions.push(`(${searches.map(() => 'name LIKE ?').join(' OR ')})`);
-    params.push(...searches.map((term) => `%${term}%`));
+    conditions.push(`(${searches.map(() => '(name LIKE ? OR memo LIKE ?)').join(' OR ')})`);
+    params.push(...searches.flatMap((term) => [`%${term}%`, `%${term}%`]));
   }
   const where = conditions.length > 0 ? `WHERE ${conditions.join(' AND ')}` : '';
   return { where, params };
